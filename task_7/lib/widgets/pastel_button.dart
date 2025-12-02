@@ -8,15 +8,16 @@ class PastelButton extends StatelessWidget {
   final IconData? icon;
   final Color? color;
   final bool isOutlined;
+  final Key? key;
 
   const PastelButton({
-    super.key,
+    this.key,
     required this.text,
     required this.onPressed,
     this.icon,
     this.color,
     this.isOutlined = false,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

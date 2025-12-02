@@ -129,6 +129,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                 
                 // Title field
                 TextFormField(
+                  key: const Key('title_field'),
                   controller: _titleController,
                   decoration: InputDecoration(
                     labelText: 'Product Title',
@@ -150,6 +151,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                 
                 // Description field
                 TextFormField(
+                  key: const Key('description_field'),
                   controller: _descriptionController,
                   decoration: InputDecoration(
                     labelText: 'Description',
@@ -173,6 +175,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                 
                 // Save button
                 PastelButton(
+                  key: const Key('save_product_button'),
                   text: _isEditMode ? 'Save Changes' : 'Add Product',
                   icon: Icons.check_circle_outline,
                   color: AppColors.lavender,

@@ -83,6 +83,7 @@ class HomeScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: Container(
+        key: const Key('add_product_fab'),
         decoration: BoxDecoration(
           gradient: AppColors.getPastelGradient(AppColors.lavender),
           borderRadius: BorderRadius.circular(16),

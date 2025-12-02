@@ -32,6 +32,7 @@ class _ProductCardState extends State<ProductCard>
     final pastelColor = AppColors.getRandomPastel(widget.index);
 
     return GestureDetector(
+      key: Key('product_card_${widget.product.id}'),
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
