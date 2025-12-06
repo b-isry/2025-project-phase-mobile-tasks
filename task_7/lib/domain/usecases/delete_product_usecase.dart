@@ -1,22 +1,51 @@
-import '../repositories/product_repository.dart';
-import 'base_usecase.dart';
+import 'insert_product_usecase.dart';
 
 /// Parameters for deleting a product
+/// 
+/// Wraps the product ID to be deleted following the use case parameter pattern.
 class DeleteProductParams {
-  final String id;
+  /// The ID of the product to delete
+  final String productId;
 
-  DeleteProductParams(this.id);
+  /// Creates parameters for deleting a product
+  DeleteProductParams(this.productId);
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is DeleteProductParams && other.productId == productId;
+  }
+
+  @override
+  int get hashCode => productId.hashCode;
 }
 
 /// Use case for deleting a product
-class DeleteProductUsecase extends UseCase<void, DeleteProductParams> {
-  final ProductRepository repository;
+/// 
+/// This use case handles the business logic for removing a product from the system.
+/// It follows the Single Responsibility Principle by focusing only on product deletion.
+/// 
+/// Example usage:
+/// ```dart
+/// final useCase = DeleteProductUsecase(repository);
+/// await useCase(DeleteProductParams('product-id-123'));
+/// ```
+class DeleteProductUsecase {
+  /// Repository abstraction for data operations
+  final ProductRepositoryInterface _repository;
 
-  DeleteProductUsecase(this.repository);
+  /// Creates an instance of DeleteProductUsecase
+  /// 
+  /// Requires a [ProductRepositoryInterface] implementation for data persistence.
+  DeleteProductUsecase(this._repository);
 
-  @override
-  Future<void> call(DeleteProductParams params) {
-    return repository.deleteProduct(params.id);
+  /// Executes the use case to delete a product
+  /// 
+  /// Takes [DeleteProductParams] containing the ID of the product to delete.
+  /// Returns a [Future] that completes when the product is successfully deleted.
+  /// 
+  /// Throws an exception if the deletion fails or the product doesn't exist.
+  Future<void> call(DeleteProductParams params) async {
+    return await _repository.deleteProduct(params.productId);
   }
 }
-
