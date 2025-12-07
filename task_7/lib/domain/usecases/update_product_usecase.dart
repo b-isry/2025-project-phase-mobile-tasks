@@ -1,5 +1,5 @@
 import '../entities/product.dart';
-import 'insert_product_usecase.dart';
+import '../repositories/product_repository_contract.dart';
 
 /// Parameters for updating a product
 /// 
@@ -32,12 +32,12 @@ class UpdateProductParams {
 /// await useCase(UpdateProductParams(updatedProduct));
 /// ```
 class UpdateProductUsecase {
-  /// Repository abstraction for data operations
-  final ProductRepositoryInterface _repository;
+  /// Repository contract for data operations
+  final ProductRepositoryContract _repository;
 
   /// Creates an instance of UpdateProductUsecase
   /// 
-  /// Requires a [ProductRepositoryInterface] implementation for data persistence.
+  /// Requires a [ProductRepositoryContract] implementation for data persistence.
   UpdateProductUsecase(this._repository);
 
   /// Executes the use case to update a product

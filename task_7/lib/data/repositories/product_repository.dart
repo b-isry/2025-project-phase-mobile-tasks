@@ -1,30 +1,27 @@
 import '../../domain/entities/product.dart';
-import '../../domain/usecases/insert_product_usecase.dart';
+import '../../domain/repositories/product_repository_contract.dart';
 
-/// Concrete implementation of the ProductRepository
+/// Simple in-memory implementation of ProductRepository for testing
 /// 
-/// This class implements the data layer of Clean Architecture.
-/// It manages product data using an in-memory storage mechanism and
-/// uses dependency injection to receive use cases.
+/// This class provides a basic implementation of the repository contract
+/// using in-memory storage. It's useful for:
+/// - Unit testing without complex dependencies
+/// - Quick prototyping
+/// - Testing use cases in isolation
 /// 
-/// Following TDD principles, this repository:
-/// - Uses use cases for business logic
-/// - Maintains separation of concerns
-/// - Provides testable, injectable dependencies
+/// For production use, consider using ProductRepositoryImpl with proper
+/// data sources (remote API and local cache).
 /// 
 /// Example usage:
 /// ```dart
 /// final repository = ProductRepository(
-///   insertUsecase: insertUsecase,
-///   updateUsecase: updateUsecase,
-///   deleteUsecase: deleteUsecase,
-///   getUsecase: getUsecase,
+///   initialProducts: {'1': product1, '2': product2},
 /// );
 /// 
 /// await repository.insertProduct(product);
 /// final product = await repository.getProduct('id');
 /// ```
-class ProductRepository implements ProductRepositoryInterface {
+class ProductRepository implements ProductRepositoryContract {
   /// In-memory storage for products
   final Map<String, Product> _products = {};
 
@@ -86,7 +83,7 @@ class ProductRepository implements ProductRepositoryInterface {
   /// 
   /// Throws an [ArgumentError] if the product is null.
   @override
-  Future<void> insertProduct(Product product) async {
+  Future<void> createProduct(Product product) async {
     if (product.id.isEmpty) {
       throw ArgumentError('Product ID cannot be empty');
     }
@@ -159,7 +156,7 @@ class ProductRepository implements ProductRepositoryInterface {
   /// 
   /// Returns a [Future] containing the product or null.
   @override
-  Future<Product?> getProduct(String id) async {
+  Future<Product?> getProductById(String id) async {
     if (id.isEmpty) {
       throw ArgumentError('Product ID cannot be empty');
     }
@@ -176,9 +173,19 @@ class ProductRepository implements ProductRepositoryInterface {
   /// This is a utility method for testing and debugging.
   /// 
   /// Returns a [Future] containing a list of all products.
+  @override
   Future<List<Product>> getAllProducts() async {
     await Future.delayed(Duration.zero);
     return _products.values.toList();
+  }
+  
+  // Backward compatibility methods (non-override)
+  Future<void> insertProduct(Product product) async {
+    await createProduct(product);
+  }
+  
+  Future<Product?> getProduct(String id) async {
+    return await getProductById(id);
   }
 
   /// Clears all products from the repository

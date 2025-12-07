@@ -1,4 +1,5 @@
 import '../entities/product.dart';
+import '../repositories/product_repository_contract.dart';
 
 /// Parameters for inserting a product
 /// 
@@ -31,12 +32,12 @@ class InsertProductParams {
 /// await useCase(InsertProductParams(newProduct));
 /// ```
 class InsertProductUsecase {
-  /// Repository abstraction for data operations
-  final ProductRepositoryInterface _repository;
+  /// Repository contract for data operations
+  final ProductRepositoryContract _repository;
 
   /// Creates an instance of InsertProductUsecase
   /// 
-  /// Requires a [ProductRepositoryInterface] implementation for data persistence.
+  /// Requires a [ProductRepositoryContract] implementation for data persistence.
   InsertProductUsecase(this._repository);
 
   /// Executes the use case to insert a product
@@ -46,25 +47,7 @@ class InsertProductUsecase {
   /// 
   /// Throws an exception if the insertion fails.
   Future<void> call(InsertProductParams params) async {
-    return await _repository.insertProduct(params.product);
+    return await _repository.createProduct(params.product);
   }
-}
-
-/// Abstract interface for product repository operations
-/// 
-/// This interface defines the contract that must be implemented by the data layer.
-/// It follows the Dependency Inversion Principle by depending on abstractions.
-abstract class ProductRepositoryInterface {
-  /// Inserts a new product
-  Future<void> insertProduct(Product product);
-  
-  /// Updates an existing product
-  Future<void> updateProduct(Product product);
-  
-  /// Deletes a product by ID
-  Future<void> deleteProduct(String id);
-  
-  /// Retrieves a product by ID
-  Future<Product?> getProduct(String id);
 }
 

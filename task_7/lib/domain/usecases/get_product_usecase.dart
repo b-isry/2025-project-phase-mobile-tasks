@@ -1,5 +1,5 @@
 import '../entities/product.dart';
-import 'insert_product_usecase.dart';
+import '../repositories/product_repository_contract.dart';
 
 /// Parameters for getting a product
 /// 
@@ -32,12 +32,12 @@ class GetProductParams {
 /// final product = await useCase(GetProductParams('product-id-123'));
 /// ```
 class GetProductUsecase {
-  /// Repository abstraction for data operations
-  final ProductRepositoryInterface _repository;
+  /// Repository contract for data operations
+  final ProductRepositoryContract _repository;
 
   /// Creates an instance of GetProductUsecase
   /// 
-  /// Requires a [ProductRepositoryInterface] implementation for data access.
+  /// Requires a [ProductRepositoryContract] implementation for data access.
   GetProductUsecase(this._repository);
 
   /// Executes the use case to retrieve a product
@@ -47,7 +47,7 @@ class GetProductUsecase {
   /// 
   /// Throws an exception if the retrieval operation fails.
   Future<Product?> call(GetProductParams params) async {
-    return await _repository.getProduct(params.productId);
+    return await _repository.getProductById(params.productId);
   }
 }
 

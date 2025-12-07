@@ -1,12 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:product_manager/domain/entities/product.dart';
+import 'package:product_manager/domain/repositories/product_repository_contract.dart';
 import 'package:product_manager/domain/usecases/insert_product_usecase.dart';
 import 'package:product_manager/domain/usecases/update_product_usecase.dart';
 import 'package:product_manager/domain/usecases/delete_product_usecase.dart';
 import 'package:product_manager/domain/usecases/get_product_usecase.dart';
 
 /// Mock repository for testing use cases
-class MockProductRepository implements ProductRepositoryInterface {
+class MockProductRepository implements ProductRepositoryContract {
   final Map<String, Product> _products = {};
   
   bool insertCalled = false;
@@ -20,10 +21,22 @@ class MockProductRepository implements ProductRepositoryInterface {
   String? lastRetrievedId;
 
   @override
-  Future<void> insertProduct(Product product) async {
+  Future<void> createProduct(Product product) async {
     insertCalled = true;
     lastInsertedProduct = product;
     _products[product.id] = product;
+  }
+
+  @override
+  Future<List<Product>> getAllProducts() async {
+    return _products.values.toList();
+  }
+
+  @override
+  Future<Product?> getProductById(String id) async {
+    getCalled = true;
+    lastRetrievedId = id;
+    return _products[id];
   }
 
   @override
@@ -46,11 +59,13 @@ class MockProductRepository implements ProductRepositoryInterface {
     _products.remove(id);
   }
 
-  @override
+  // Backward compatibility methods
+  Future<void> insertProduct(Product product) async {
+    await createProduct(product);
+  }
+
   Future<Product?> getProduct(String id) async {
-    getCalled = true;
-    lastRetrievedId = id;
-    return _products[id];
+    return await getProductById(id);
   }
 
   void reset() {
