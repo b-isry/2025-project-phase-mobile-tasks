@@ -7,6 +7,9 @@ import '../domain/usecases/create_product_usecase.dart';
 import '../domain/usecases/update_product_usecase.dart';
 import '../domain/usecases/delete_product_usecase.dart';
 import '../data/repositories/product_repository_impl.dart';
+import '../data/datasources/remote/product_remote_datasource_impl.dart';
+import '../data/datasources/local/product_local_datasource_impl.dart';
+import '../core/network/network_info_impl.dart';
 
 /// Provider for managing products with CRUD operations
 /// Refactored to use Clean Architecture domain layer with use cases
@@ -25,7 +28,12 @@ class ProductProvider extends ChangeNotifier {
   bool _isInitialized = false;
 
   ProductProvider({ProductRepositoryImpl? repository})
-      : _repository = repository ?? ProductRepositoryImpl() {
+      : _repository = repository ??
+            ProductRepositoryImpl(
+              remoteDataSource: ProductRemoteDataSourceImpl(),
+              localDataSource: ProductLocalDataSourceImpl(),
+              networkInfo: NetworkInfoImpl(),
+            ) {
     // Initialize use cases with repository
     _viewAllProductsUsecase = ViewAllProductsUsecase(_repository);
     _viewProductUsecase = ViewProductUsecase(_repository);

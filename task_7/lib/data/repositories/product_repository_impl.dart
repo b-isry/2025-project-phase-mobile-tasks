@@ -1,269 +1,218 @@
+import '../../core/network/network_info.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/repositories/product_repository_contract.dart';
 import '../datasources/local/product_local_datasource.dart';
 import '../datasources/remote/product_remote_datasource.dart';
+import '../datasources/remote/product_remote_datasource_impl.dart';
 
-/// Concrete implementation of ProductRepository following Clean Architecture
+/// Production-ready implementation of ProductRepository following Clean Architecture
 /// 
-/// This repository implementation acts as a mediator between the domain layer
-/// (use cases) and the data layer (data sources). It implements the repository
-/// contract and delegates work to remote and local data sources.
+/// This repository implements a network-aware caching strategy:
+/// - When online: Fetches from remote API and updates local cache
+/// - When offline: Serves data from local cache
+/// - Always keeps cache synchronized with remote when possible
 /// 
-/// The repository follows these principles:
-/// - Tries remote data source first for fresh data
-/// - Falls back to local cache if remote fails (offline support)
-/// - Keeps local cache synchronized with remote data
-/// - Handles error cases gracefully
-/// 
-/// Dependencies are injected through the constructor for better testability
-/// and flexibility.
+/// The repository handles:
+/// - Network connectivity detection
+/// - Automatic fallback to cache on network errors
+/// - Cache synchronization after successful remote operations
+/// - Error handling and propagation
 /// 
 /// Example usage:
 /// ```dart
 /// final repository = ProductRepositoryImpl(
-///   remoteDataSource: ProductRemoteDataSourceImpl(httpClient),
-///   localDataSource: ProductLocalDataSourceImpl(database),
+///   remoteDataSource: remoteDataSource,
+///   localDataSource: localDataSource,
+///   networkInfo: networkInfo,
 /// );
 /// 
+/// // Automatically handles network availability
 /// final products = await repository.getAllProducts();
 /// ```
 class ProductRepositoryImpl implements ProductRepository, ProductRepositoryContract {
-  /// Remote data source for fetching data from API
-  final ProductRemoteDataSource? remoteDataSource;
+  /// Remote data source for API operations
+  final ProductRemoteDataSource remoteDataSource;
   
-  /// Local data source for caching data
-  final ProductLocalDataSource? localDataSource;
+  /// Local data source for caching
+  final ProductLocalDataSource localDataSource;
   
-  /// In-memory storage for fallback/testing (will be replaced by actual data sources)
-  final List<Product> _products;
+  /// Network connectivity checker
+  final NetworkInfo networkInfo;
 
-  /// Creates a ProductRepositoryImpl with optional data source dependencies
+  /// Creates a ProductRepositoryImpl with required dependencies
   /// 
-  /// Parameters:
-  ///   - [remoteDataSource]: Optional remote data source for API calls
-  ///   - [localDataSource]: Optional local data source for caching
-  ///   - [initialProducts]: Optional initial products for testing/fallback
-  /// 
-  /// If no data sources are provided, the repository uses in-memory storage.
+  /// All parameters are required to ensure proper functionality:
+  ///   - [remoteDataSource]: Handles API calls to backend server
+  ///   - [localDataSource]: Handles local cache operations
+  ///   - [networkInfo]: Checks network connectivity status
   ProductRepositoryImpl({
-    this.remoteDataSource,
-    this.localDataSource,
-    List<Product>? initialProducts,
-  }) : _products = initialProducts ?? [
-          Product(
-            id: '1',
-            name: 'Laptop',
-            description: 'High-performance laptop for developers',
-            imageUrl: '',
-            price: 999.99,
-          ),
-          Product(
-            id: '2',
-            name: 'Smartphone',
-            description: 'Latest flagship smartphone with amazing camera',
-            imageUrl: '',
-            price: 799.99,
-          ),
-          Product(
-            id: '3',
-            name: 'Headphones',
-            description: 'Noise-cancelling wireless headphones',
-            imageUrl: '',
-            price: 299.99,
-          ),
-        ];
+    required this.remoteDataSource,
+    required this.localDataSource,
+    required this.networkInfo,
+  });
 
   @override
   Future<List<Product>> getAllProducts() async {
-    // TODO: Implement proper data source logic
-    // Strategy: Try remote first, fallback to local cache, finally fallback to in-memory
-    
-    try {
-      // Try fetching from remote data source first
-      if (remoteDataSource != null) {
-        final products = await remoteDataSource!.fetchAllProducts();
+    // Check network connectivity
+    if (await networkInfo.isConnected) {
+      try {
+        // Fetch from remote when online
+        final products = await remoteDataSource.fetchAllProducts();
         
-        // Cache the fetched products locally
-        if (localDataSource != null) {
-          await localDataSource!.cacheProducts(products);
-        }
+        // Update local cache with fresh data
+        await localDataSource.cacheProducts(products);
         
         return products;
+      } catch (e) {
+        // On remote error, fallback to cache
+        return await localDataSource.getCachedProducts();
       }
-      
-      // If no remote source, try local cache
-      if (localDataSource != null) {
-        final cachedProducts = await localDataSource!.getCachedProducts();
-        if (cachedProducts.isNotEmpty) {
-          return cachedProducts;
-        }
-      }
-      
-      // Fallback to in-memory storage
-      return List.unmodifiable(_products);
-    } catch (e) {
-      // On error, try local cache as fallback
-      if (localDataSource != null) {
-        try {
-          return await localDataSource!.getCachedProducts();
-        } catch (_) {
-          // If cache also fails, return in-memory data
-          return List.unmodifiable(_products);
-        }
-      }
-      
-      // Final fallback to in-memory storage
-      return List.unmodifiable(_products);
+    } else {
+      // When offline, use cached data
+      return await localDataSource.getCachedProducts();
     }
   }
 
   @override
   Future<Product?> getProductById(String id) async {
-    // TODO: Implement proper data source logic
-    // Strategy: Check local cache first for speed, then remote if not found
-    
-    try {
-      // Try local cache first for better performance
-      if (localDataSource != null) {
-        final cached = await localDataSource!.getCachedProductById(id);
-        if (cached != null) {
-          return cached;
-        }
-      }
-      
-      // If not in cache, fetch from remote
-      if (remoteDataSource != null) {
-        final product = await remoteDataSource!.fetchProductById(id);
+    // Check network connectivity
+    if (await networkInfo.isConnected) {
+      try {
+        // Fetch from remote when online
+        final product = await remoteDataSource.fetchProductById(id);
         
-        // Cache the fetched product
-        if (product != null && localDataSource != null) {
-          await localDataSource!.cacheProduct(product);
+        // Update cache if product exists
+        if (product != null) {
+          await localDataSource.cacheProduct(product);
         }
         
         return product;
+      } catch (e) {
+        // On remote error, fallback to cache
+        return await localDataSource.getCachedProductById(id);
       }
-      
-      // Fallback to in-memory storage
-      return _products.firstWhere((product) => product.id == id);
-    } catch (e) {
-      // Try in-memory storage as final fallback
-      try {
-        return _products.firstWhere((product) => product.id == id);
-      } catch (_) {
-        return null;
-      }
+    } else {
+      // When offline, use cached data
+      return await localDataSource.getCachedProductById(id);
     }
   }
 
   @override
   Future<void> createProduct(Product product) async {
-    // TODO: Implement proper data source logic
-    // Strategy: Save to remote first, then update local cache
-    
-    try {
-      // Save to remote data source
-      if (remoteDataSource != null) {
-        await remoteDataSource!.addProduct(product);
+    // Check network connectivity
+    if (await networkInfo.isConnected) {
+      try {
+        // Create on remote server
+        await remoteDataSource.addProduct(product);
+        
+        // Update local cache after successful creation
+        await localDataSource.cacheProduct(product);
+      } on Exception {
+        // Cache locally even if remote fails (for sync later)
+        await localDataSource.cacheProduct(product);
+        
+        // Re-throw to inform caller of the error
+        rethrow;
       }
+    } else {
+      // When offline, cache locally first for future sync
+      await localDataSource.cacheProduct(product);
       
-      // Cache locally for offline access
-      if (localDataSource != null) {
-        await localDataSource!.cacheProduct(product);
-      }
-      
-      // Update in-memory storage as fallback
-      _products.add(product);
-    } catch (e) {
-      // On error, at least save locally and in-memory
-      if (localDataSource != null) {
-        await localDataSource!.cacheProduct(product);
-      }
-      _products.add(product);
-      rethrow; // Propagate error to caller
+      // Throw error to inform caller that product was only cached
+      throw Exception('No network connection. Product cached locally.');
     }
-  }
-
-  // Backward compatibility method (not part of contract)
-  Future<void> insertProduct(Product product) async {
-    // Delegate to createProduct for compatibility with use cases
-    await createProduct(product);
   }
 
   @override
   Future<void> updateProduct(Product product) async {
-    // TODO: Implement proper data source logic
-    // Strategy: Update remote first, then sync with local cache
-    
-    try {
-      // Update in remote data source
-      if (remoteDataSource != null) {
-        await remoteDataSource!.editProduct(product);
+    // Check network connectivity
+    if (await networkInfo.isConnected) {
+      try {
+        // Update on remote server
+        await remoteDataSource.editProduct(product);
+        
+        // Update local cache after successful update
+        await localDataSource.updateCachedProduct(product);
+      } on Exception {
+        // Update cache even if remote fails
+        await localDataSource.updateCachedProduct(product);
+        
+        // Re-throw to inform caller of the error
+        rethrow;
       }
+    } else {
+      // When offline, update cache first
+      await localDataSource.updateCachedProduct(product);
       
-      // Update local cache to stay in sync
-      if (localDataSource != null) {
-        await localDataSource!.updateCachedProduct(product);
-      }
-      
-      // Update in-memory storage
-      final index = _products.indexWhere((p) => p.id == product.id);
-      if (index != -1) {
-        _products[index] = product;
-      }
-    } catch (e) {
-      // On error, at least update locally
-      if (localDataSource != null) {
-        await localDataSource!.updateCachedProduct(product);
-      }
-      final index = _products.indexWhere((p) => p.id == product.id);
-      if (index != -1) {
-        _products[index] = product;
-      }
-      rethrow; // Propagate error to caller
+      // Throw error to inform caller that update was only local
+      throw Exception('No network connection. Product updated locally.');
     }
   }
 
   @override
   Future<void> deleteProduct(String id) async {
-    // TODO: Implement proper data source logic
-    // Strategy: Delete from remote first, then remove from local cache
-    
-    try {
-      // Delete from remote data source
-      if (remoteDataSource != null) {
-        await remoteDataSource!.removeProduct(id);
+    // Check network connectivity
+    if (await networkInfo.isConnected) {
+      try {
+        // Delete from remote server
+        await remoteDataSource.removeProduct(id);
+        
+        // Remove from local cache after successful deletion
+        await localDataSource.deleteCachedProduct(id);
+      } on Exception {
+        // Remove from cache even if remote fails
+        await localDataSource.deleteCachedProduct(id);
+        
+        // Re-throw to inform caller of the error
+        rethrow;
       }
+    } else {
+      // When offline, remove from cache first
+      await localDataSource.deleteCachedProduct(id);
       
-      // Remove from local cache
-      if (localDataSource != null) {
-        await localDataSource!.deleteCachedProduct(id);
-      }
-      
-      // Remove from in-memory storage
-      _products.removeWhere((product) => product.id == id);
-    } catch (e) {
-      // On error, at least delete locally
-      if (localDataSource != null) {
-        await localDataSource!.deleteCachedProduct(id);
-      }
-      _products.removeWhere((product) => product.id == id);
-      rethrow; // Propagate error to caller
+      // Throw error to inform caller that deletion was only local
+      throw Exception('No network connection. Product deleted locally.');
     }
   }
 
-  // Backward compatibility method (not part of contract)
+  // Backward compatibility methods for existing use cases
+  
+  /// Delegates to createProduct for backward compatibility
+  Future<void> insertProduct(Product product) async {
+    await createProduct(product);
+  }
+
+  /// Delegates to getProductById for backward compatibility
   Future<Product?> getProduct(String id) async {
-    // Delegate to getProductById for compatibility with use cases
     return await getProductById(id);
   }
 
-  /// Generate a unique ID for new products (helper method)
+  /// Generates a unique ID for new products
+  /// 
+  /// If the remoteDataSource has a generateId method, delegates to it.
+  /// Otherwise, implements a simple UUID v4-like generator.
   String generateId() {
-    if (_products.isEmpty) return '1';
-    final ids = _products.map((p) => int.tryParse(p.id) ?? 0).toList();
-    final maxId = ids.reduce((a, b) => a > b ? a : b);
-    return (maxId + 1).toString();
+    // Check if remoteDataSource is ProductRemoteDataSourceImpl which has generateId
+    if (remoteDataSource is ProductRemoteDataSourceImpl) {
+      return (remoteDataSource as ProductRemoteDataSourceImpl).generateId();
+    }
+    
+    // Try dynamic invocation as fallback for other implementations
+    try {
+      final dynamic source = remoteDataSource;
+      final result = source.generateId();
+      if (result is String) {
+        return result;
+      }
+    } catch (e) {
+      // If generateId doesn't exist, fall through to default implementation
+    }
+    
+    // Default UUID v4-like generator
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final random = (DateTime.now().microsecondsSinceEpoch % 1000000);
+    final hash = timestamp.hashCode.abs();
+    return '${timestamp.toRadixString(36)}-${random.toRadixString(36)}-${hash.toRadixString(36)}';
   }
 }
-
