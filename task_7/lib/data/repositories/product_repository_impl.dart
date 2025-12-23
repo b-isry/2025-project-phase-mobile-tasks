@@ -1,4 +1,5 @@
 import '../../core/network/network_info.dart';
+import '../../core/error/exceptions.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../../domain/repositories/product_repository_contract.dart';
@@ -69,8 +70,8 @@ class ProductRepositoryImpl implements ProductRepository, ProductRepositoryContr
         return await localDataSource.getCachedProducts();
       }
     } else {
-      // When offline, use cached data
-      return await localDataSource.getCachedProducts();
+      // When NOT connected, throw NetworkException
+      throw NetworkException();
     }
   }
 

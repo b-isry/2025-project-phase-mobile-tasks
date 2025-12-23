@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import '../domain/entities/product.dart';
 import '../domain/usecases/base_usecase.dart';
 import '../domain/usecases/view_all_products_usecase.dart';
@@ -32,7 +33,9 @@ class ProductProvider extends ChangeNotifier {
             ProductRepositoryImpl(
               remoteDataSource: ProductRemoteDataSourceImpl(),
               localDataSource: ProductLocalDataSourceImpl(),
-              networkInfo: NetworkInfoImpl(),
+              networkInfo: NetworkInfoImpl(
+                connectionChecker: kIsWeb ? null : InternetConnectionChecker(),
+              ),
             ) {
     // Initialize use cases with repository
     _viewAllProductsUsecase = ViewAllProductsUsecase(_repository);
