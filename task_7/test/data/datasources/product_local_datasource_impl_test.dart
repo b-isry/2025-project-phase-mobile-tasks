@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:product_manager/core/error/exceptions.dart';
+import 'package:product_manager/core/constants/cache_constants.dart';
 import 'package:product_manager/data/datasources/local/product_local_datasource_impl.dart';
 import 'package:product_manager/domain/entities/product.dart';
 
@@ -52,7 +53,7 @@ void main() {
         await dataSource.cacheProducts(testProducts);
 
         // Assert
-        final cachedList = sharedPreferences.getStringList(ProductLocalDataSourceImpl.CACHED_PRODUCTS_KEY);
+        final cachedList = sharedPreferences.getStringList(CacheConstants.cachedProductsKey);
         expect(cachedList, isNotNull);
         expect(cachedList!.length, equals(3));
         
@@ -69,7 +70,7 @@ void main() {
 
         // Assert
         expect(
-          sharedPreferences.containsKey(ProductLocalDataSourceImpl.CACHED_PRODUCTS_KEY),
+          sharedPreferences.containsKey(CacheConstants.cachedProductsKey),
           isTrue,
         );
       });
@@ -82,7 +83,7 @@ void main() {
             .map((product) => json.encode(product.toJson()))
             .toList();
         await sharedPreferences.setStringList(
-          ProductLocalDataSourceImpl.CACHED_PRODUCTS_KEY,
+          CacheConstants.cachedProductsKey,
           jsonStringList,
         );
 
@@ -104,7 +105,7 @@ void main() {
 
       test('should throw CacheException when key does not exist', () async {
         // Ensure key doesn't exist
-        await sharedPreferences.remove(ProductLocalDataSourceImpl.CACHED_PRODUCTS_KEY);
+        await sharedPreferences.remove(CacheConstants.cachedProductsKey);
 
         // Act & Assert
         expect(
@@ -239,7 +240,7 @@ void main() {
 
         // Assert
         expect(
-          sharedPreferences.containsKey(ProductLocalDataSourceImpl.CACHED_PRODUCTS_KEY),
+          sharedPreferences.containsKey(CacheConstants.cachedProductsKey),
           isFalse,
         );
       });
@@ -255,7 +256,7 @@ void main() {
 
         // Assert
         expect(
-          sharedPreferences.containsKey(ProductLocalDataSourceImpl.CACHED_PRODUCTS_KEY),
+          sharedPreferences.containsKey(CacheConstants.cachedProductsKey),
           isFalse,
         );
         expect(
