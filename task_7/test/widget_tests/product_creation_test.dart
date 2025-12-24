@@ -9,7 +9,7 @@ void main() {
     testWidgets('a. Can render the Add Product screen', (WidgetTester tester) async {
       // Build HomeScreen wrapped with provider
       await tester.pumpWidget(
-        createTestApp(
+        await createTestApp(
           child: const HomeScreen(),
         ),
       );
@@ -30,7 +30,7 @@ void main() {
     testWidgets('b. Create a product with valid input', (WidgetTester tester) async {
       // Start with empty products
       await tester.pumpWidget(
-        createTestApp(
+        await createTestApp(
           child: const HomeScreen(),
         ),
       );
@@ -67,7 +67,7 @@ void main() {
 
     testWidgets('c. Creating a product with empty name fails', (WidgetTester tester) async {
       await tester.pumpWidget(
-        createTestApp(
+        await createTestApp(
           child: const HomeScreen(),
         ),
       );
@@ -99,7 +99,7 @@ void main() {
 
     testWidgets('d. Creating a product with short title fails', (WidgetTester tester) async {
       await tester.pumpWidget(
-        createTestApp(
+        await createTestApp(
           child: const HomeScreen(),
         ),
       );
@@ -133,7 +133,7 @@ void main() {
 
     testWidgets('e. Creating a product with short description fails', (WidgetTester tester) async {
       await tester.pumpWidget(
-        createTestApp(
+        await createTestApp(
           child: const HomeScreen(),
         ),
       );

@@ -16,12 +16,11 @@ void main() {
       ];
 
       // Build HomeScreen with seeded products
-      await tester.pumpWidget(
-        createTestApp(
-          child: const HomeScreen(),
-          initialProducts: testProducts,
-        ),
+      final testApp = await createTestApp(
+        child: const HomeScreen(),
+        initialProducts: testProducts,
       );
+      await tester.pumpWidget(testApp);
       await tester.pumpAndSettle();
 
       // Verify grid/list appears
@@ -35,11 +34,10 @@ void main() {
 
     testWidgets('b. Empty state displays when no products', (WidgetTester tester) async {
       // Build HomeScreen with no products
-      await tester.pumpWidget(
-        createTestApp(
-          child: const HomeScreen(),
-        ),
+      final testApp = await createTestApp(
+        child: const HomeScreen(),
       );
+      await tester.pumpWidget(testApp);
       await tester.pumpAndSettle();
 
       // Verify empty state message
@@ -56,12 +54,11 @@ void main() {
         Product(id: '1', title: 'Laptop', description: 'High-performance laptop'),
       ];
 
-      await tester.pumpWidget(
-        createTestApp(
-          child: const HomeScreen(),
-          initialProducts: initialProducts,
-        ),
+      final testApp = await createTestApp(
+        child: const HomeScreen(),
+        initialProducts: initialProducts,
       );
+      await tester.pumpWidget(testApp);
       await tester.pumpAndSettle();
 
       // Verify initial product count
@@ -107,12 +104,11 @@ void main() {
         Product(id: '4', title: 'Product 4', description: 'Description 4 for testing'),
       ];
 
-      await tester.pumpWidget(
-        createTestApp(
-          child: const HomeScreen(),
-          initialProducts: testProducts,
-        ),
+      final testApp = await createTestApp(
+        child: const HomeScreen(),
+        initialProducts: testProducts,
       );
+      await tester.pumpWidget(testApp);
       await tester.pumpAndSettle();
 
       // Verify all products are displayed
@@ -130,12 +126,11 @@ void main() {
         Product(id: '1', title: 'Test Product', description: 'Test Description for testing'),
       ];
 
-      await tester.pumpWidget(
-        createTestApp(
-          child: const HomeScreen(),
-          initialProducts: testProducts,
-        ),
+      final testApp = await createTestApp(
+        child: const HomeScreen(),
+        initialProducts: testProducts,
       );
+      await tester.pumpWidget(testApp);
       await tester.pumpAndSettle();
 
       // Verify product card has correct key

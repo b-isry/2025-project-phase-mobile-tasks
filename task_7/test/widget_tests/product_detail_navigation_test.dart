@@ -16,12 +16,11 @@ void main() {
       );
 
       // Build HomeScreen with seeded product
-      await tester.pumpWidget(
-        createTestApp(
-          child: const HomeScreen(),
-          initialProducts: [testProduct],
-        ),
+      final testApp = await createTestApp(
+        child: const HomeScreen(),
+        initialProducts: [testProduct],
       );
+      await tester.pumpWidget(testApp);
       await tester.pumpAndSettle();
 
       // Verify product is displayed
@@ -51,12 +50,11 @@ void main() {
         description: 'Test product description for navigation',
       );
 
-      await tester.pumpWidget(
-        createTestApp(
-          child: const HomeScreen(),
-          initialProducts: [testProduct],
-        ),
+      final testApp = await createTestApp(
+        child: const HomeScreen(),
+        initialProducts: [testProduct],
       );
+      await tester.pumpWidget(testApp);
       await tester.pumpAndSettle();
 
       // Navigate to detail screen
@@ -99,12 +97,11 @@ void main() {
         description: 'This is a very detailed product description',
       );
 
-      await tester.pumpWidget(
-        createTestApp(
-          child: const HomeScreen(),
-          initialProducts: [testProduct],
-        ),
+      final testApp = await createTestApp(
+        child: const HomeScreen(),
+        initialProducts: [testProduct],
       );
+      await tester.pumpWidget(testApp);
       await tester.pumpAndSettle();
 
       // Navigate to detail screen
@@ -123,12 +120,11 @@ void main() {
         Product(id: '2', title: 'Second Product', description: 'Second description text'),
       ];
 
-      await tester.pumpWidget(
-        createTestApp(
-          child: const HomeScreen(),
-          initialProducts: testProducts,
-        ),
+      final testApp = await createTestApp(
+        child: const HomeScreen(),
+        initialProducts: testProducts,
       );
+      await tester.pumpWidget(testApp);
       await tester.pumpAndSettle();
 
       // Navigate to first product
@@ -160,12 +156,11 @@ void main() {
         description: 'Testing hero animation tag',
       );
 
-      await tester.pumpWidget(
-        createTestApp(
-          child: const HomeScreen(),
-          initialProducts: [testProduct],
-        ),
+      final testApp = await createTestApp(
+        child: const HomeScreen(),
+        initialProducts: [testProduct],
       );
+      await tester.pumpWidget(testApp);
       await tester.pumpAndSettle();
 
       // Verify Hero widget exists on home screen
