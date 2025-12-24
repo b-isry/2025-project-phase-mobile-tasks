@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/entities/product.dart';
 import '../domain/usecases/base_usecase.dart';
 import '../domain/usecases/view_all_products_usecase.dart';
@@ -28,14 +28,16 @@ class ProductProvider extends ChangeNotifier {
   List<Product> _products = [];
   bool _isInitialized = false;
 
-  ProductProvider({ProductRepositoryImpl? repository})
-      : _repository = repository ??
+  ProductProvider({
+    ProductRepositoryImpl? repository,
+    required SharedPreferences sharedPreferences,
+  }) : _repository = repository ??
             ProductRepositoryImpl(
               remoteDataSource: ProductRemoteDataSourceImpl(),
-              localDataSource: ProductLocalDataSourceImpl(),
-              networkInfo: NetworkInfoImpl(
-                connectionChecker: kIsWeb ? null : InternetConnectionChecker(),
+              localDataSource: ProductLocalDataSourceImpl(
+                sharedPreferences: sharedPreferences,
               ),
+              networkInfo: NetworkInfoImpl(),
             ) {
     // Initialize use cases with repository
     _viewAllProductsUsecase = ViewAllProductsUsecase(_repository);
