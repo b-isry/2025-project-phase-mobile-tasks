@@ -65,11 +65,21 @@ class ProductRepositoryImpl implements ProductRepository, ProductRepositoryContr
         return products;
       } catch (e) {
         // On remote error, fallback to cache
-        return await localDataSource.getCachedProducts();
+        try {
+          return await localDataSource.getCachedProducts();
+        } catch (_) {
+          // If cache is also empty, return empty list
+          return [];
+        }
       }
     } else {
       // When offline, use cached data
-      return await localDataSource.getCachedProducts();
+      try {
+        return await localDataSource.getCachedProducts();
+      } catch (_) {
+        // If cache is empty, return empty list
+        return [];
+      }
     }
   }
 

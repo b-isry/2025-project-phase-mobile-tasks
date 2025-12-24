@@ -1,7 +1,8 @@
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../domain/entities/product.dart';
 import '../../../core/error/exceptions.dart';
+import '../../../core/constants/cache_constants.dart';
+import '../../../core/utils/json_helper.dart';
 import 'product_local_datasource.dart';
 
 /// SharedPreferences implementation of ProductLocalDataSource
@@ -11,9 +12,6 @@ import 'product_local_datasource.dart';
 class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   final SharedPreferences sharedPreferences;
 
-  /// Key used to store cached products in SharedPreferences
-  static const String CACHED_PRODUCTS_KEY = 'CACHED_PRODUCTS';
-
   /// Creates a ProductLocalDataSourceImpl with SharedPreferences
   /// 
   /// Parameters:
@@ -22,7 +20,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
   @override
   Future<List<Product>> getCachedProducts() async {
-    final jsonStringList = sharedPreferences.getStringList(CACHED_PRODUCTS_KEY);
+    final jsonStringList = sharedPreferences.getStringList(CacheConstants.cachedProductsKey);
     
     if (jsonStringList == null || jsonStringList.isEmpty) {
       throw CacheException();
@@ -30,7 +28,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
     try {
       return jsonStringList
-          .map((jsonString) => Product.fromJson(json.decode(jsonString) as Map<String, dynamic>))
+          .map((jsonString) => Product.fromJson(JsonHelper.decodeMap(jsonString)))
           .toList();
     } catch (e) {
       throw CacheException();
@@ -39,7 +37,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
   @override
   Future<Product?> getCachedProductById(String id) async {
-    final jsonStringList = sharedPreferences.getStringList(CACHED_PRODUCTS_KEY);
+    final jsonStringList = sharedPreferences.getStringList(CacheConstants.cachedProductsKey);
     
     if (jsonStringList == null || jsonStringList.isEmpty) {
       return null;
@@ -47,7 +45,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
     try {
       final products = jsonStringList
-          .map((jsonString) => Product.fromJson(json.decode(jsonString) as Map<String, dynamic>))
+          .map((jsonString) => Product.fromJson(JsonHelper.decodeMap(jsonString)))
           .toList();
       
       try {
@@ -62,12 +60,10 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
   @override
   Future<void> cacheProducts(List<Product> products) async {
-    final jsonStringList = products
-        .map((product) => json.encode(product.toJson()))
-        .toList();
+    final jsonStringList = JsonHelper.toJsonStringList(products, (p) => p.toJson());
 
     await sharedPreferences.setStringList(
-      CACHED_PRODUCTS_KEY,
+      CacheConstants.cachedProductsKey,
       jsonStringList,
     );
   }
@@ -106,7 +102,7 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
     products.removeWhere((product) => product.id == id);
     
     if (products.isEmpty) {
-      await sharedPreferences.remove(CACHED_PRODUCTS_KEY);
+      await sharedPreferences.remove(CacheConstants.cachedProductsKey);
     } else {
       await cacheProducts(products);
     }
@@ -114,6 +110,6 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
   @override
   Future<void> clearCache() async {
-    await sharedPreferences.remove(CACHED_PRODUCTS_KEY);
+    await sharedPreferences.remove(CacheConstants.cachedProductsKey);
   }
 }

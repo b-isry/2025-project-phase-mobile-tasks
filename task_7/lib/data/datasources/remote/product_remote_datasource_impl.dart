@@ -1,8 +1,9 @@
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../domain/entities/product.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/error/exceptions.dart';
+import '../../../core/utils/http_client_helper.dart';
+import '../../../core/utils/json_helper.dart';
 import 'product_remote_datasource.dart';
 
 /// Implementation of ProductRemoteDataSource using HTTP client
@@ -40,28 +41,11 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   @override
   Future<List<Product>> fetchAllProducts() async {
-    try {
-      final uri = Uri.parse('$baseUrl${ApiConstants.productsEndpoint}');
-      final response = await client.get(uri);
+    final uri = Uri.parse('$baseUrl${ApiConstants.productsEndpoint}');
+    final response = await HttpClientHelper.get(client, uri);
 
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
-        return jsonList
-            .map((json) => Product.fromJson(json as Map<String, dynamic>))
-            .toList();
-      } else {
-        throw ServerException();
-      }
-    } on ServerException {
-      rethrow;
-    } on FormatException {
-      throw ServerException();
-    } catch (e) {
-      if (e is ServerException) {
-        rethrow;
-      }
-      throw NetworkException();
-    }
+    final jsonList = JsonHelper.decodeList(response.body);
+    return JsonHelper.fromJsonList(jsonList, Product.fromJson);
   }
 
   @override
@@ -70,18 +54,18 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       final uri = Uri.parse('$baseUrl${ApiConstants.productsEndpoint}/$id');
       final response = await client.get(uri);
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonData = json.decode(response.body) as Map<String, dynamic>;
-        return Product.fromJson(jsonData);
-      } else if (response.statusCode == 404) {
+      if (response.statusCode == 404) {
         return null;
-      } else {
+      }
+
+      if (!HttpClientHelper.isSuccessStatusCode(response.statusCode)) {
         throw ServerException();
       }
+
+      final jsonData = JsonHelper.decodeMap(response.body);
+      return Product.fromJson(jsonData);
     } on ServerException {
       rethrow;
-    } on FormatException {
-      throw ServerException();
     } catch (e) {
       if (e is ServerException) {
         rethrow;
@@ -92,52 +76,19 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   @override
   Future<void> addProduct(Product product) async {
-    try {
-      final uri = Uri.parse('$baseUrl${ApiConstants.productsEndpoint}');
-      final body = json.encode(product.toJson());
-      final headers = {'Content-Type': 'application/json'};
-      
-      final response = await client.post(
-        uri,
-        headers: headers,
-        body: body,
-      );
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return;
-      } else {
-        throw ServerException();
-      }
-    } on ServerException {
-      rethrow;
-    } catch (e) {
-      if (e is ServerException) {
-        rethrow;
-      }
-      throw NetworkException();
-    }
+    final uri = Uri.parse('$baseUrl${ApiConstants.productsEndpoint}');
+    final body = product.toJson();
+    
+    await HttpClientHelper.post(client, uri, body: body);
   }
 
   @override
   Future<void> editProduct(Product product) async {
+    final uri = Uri.parse('$baseUrl${ApiConstants.productsEndpoint}/${product.id}');
+    final body = product.toJson();
+    
     try {
-      final uri = Uri.parse('$baseUrl${ApiConstants.productsEndpoint}/${product.id}');
-      final body = json.encode(product.toJson());
-      final headers = {'Content-Type': 'application/json'};
-      
-      final response = await client.put(
-        uri,
-        headers: headers,
-        body: body,
-      );
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return;
-      } else if (response.statusCode == 404) {
-        throw ServerException();
-      } else {
-        throw ServerException();
-      }
+      await HttpClientHelper.put(client, uri, body: body);
     } on ServerException {
       rethrow;
     } catch (e) {
@@ -150,17 +101,10 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
 
   @override
   Future<void> removeProduct(String id) async {
+    final uri = Uri.parse('$baseUrl${ApiConstants.productsEndpoint}/$id');
+    
     try {
-      final uri = Uri.parse('$baseUrl${ApiConstants.productsEndpoint}/$id');
-      final response = await client.delete(uri);
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return;
-      } else if (response.statusCode == 404) {
-        throw ServerException();
-      } else {
-        throw ServerException();
-      }
+      await HttpClientHelper.delete(client, uri);
     } on ServerException {
       rethrow;
     } catch (e) {
