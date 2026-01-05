@@ -6,7 +6,6 @@ import '../bloc/product_state.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart' as error_widget;
 import '../../domain/entities/product.dart';
-import 'product_form_page.dart';
 import '../../core/injection/injection_container.dart' as di;
 
 /// Page displaying detailed information about a single product
@@ -25,9 +24,19 @@ class ProductDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => di.sl<ProductBloc>()
-        ..add(GetSingleProductEvent(productId)),
+    // Try to get bloc from parent, otherwise create new one
+    ProductBloc bloc;
+    try {
+      bloc = context.read<ProductBloc>();
+    } catch (_) {
+      bloc = di.sl<ProductBloc>();
+    }
+    
+    // Dispatch event to load product
+    bloc.add(GetSingleProductEvent(productId));
+
+    return BlocProvider.value(
+      value: bloc,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Product Details'),
@@ -52,15 +61,17 @@ class ProductDetailPage extends StatelessWidget {
   }
 
   void _navigateToEditProduct(BuildContext context, Product product) {
+    final bloc = context.read<ProductBloc>();
     Navigator.of(context)
-        .push(
-          MaterialPageRoute(
-            builder: (_) => ProductFormPage(product: product),
-          ),
+        .pushNamed(
+          '/product/edit',
+          arguments: {'product': product},
         )
         .then((_) {
       // Refresh product after returning from form
-      context.read<ProductBloc>().add(GetSingleProductEvent(productId));
+      if (context.mounted) {
+        bloc.add(GetSingleProductEvent(productId));
+      }
     });
   }
 }
@@ -191,28 +202,52 @@ class _ProductDetailBody extends StatelessWidget {
   }
 
   void _showDeleteConfirmation(BuildContext context, Product product) {
+    final bloc = context.read<ProductBloc>();
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Product'),
-        content: Text('Are you sure you want to delete "${product.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<ProductBloc>().add(DeleteProductEvent(product.id));
-              Navigator.of(dialogContext).pop();
-              Navigator.of(context).pop(); // Go back to list
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
+      builder: (dialogContext) => BlocListener<ProductBloc, ProductState>(
+        listener: (context, state) {
+          if (state is LoadedAllProductsState) {
+            // Product deleted successfully
+            Navigator.of(dialogContext).pop(); // Close dialog
+            Navigator.of(context).pop(); // Go back to list
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Product deleted successfully!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          } else if (state is ErrorState) {
+            // Show error message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${state.message}'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        },
+        child: AlertDialog(
+          title: const Text('Delete Product'),
+          content: Text('Are you sure you want to delete "${product.name}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
             ),
-            child: const Text('Delete'),
-          ),
-        ],
+            TextButton(
+              onPressed: () {
+                bloc.add(DeleteProductEvent(product.id));
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
       ),
     );
   }

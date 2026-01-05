@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/injection/injection_container.dart' as di;
 import 'presentation/bloc/product_bloc.dart';
 import 'presentation/bloc/product_event.dart';
-import 'presentation/pages/product_list_page.dart';
+import 'presentation/routes/app_routes.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -27,7 +27,9 @@ class MyApp extends StatelessWidget {
         title: 'Product Manager',
         theme: AppTheme.theme,
         debugShowCheckedModeBanner: false,
-        home: const ProductListPage(),
+        initialRoute: AppRoutes.productList,
+        routes: AppRoutes.routes,
+        onGenerateRoute: AppRoutes.onGenerateRoute,
       ),
     );
   }
