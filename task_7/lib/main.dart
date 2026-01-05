@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/injection/injection_container.dart' as di;
 import 'providers/product_provider.dart';
 import 'routes.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
+  
+  // Initialize dependency injection
+  await di.init();
+  
+  // Get SharedPreferences from service locator
+  final prefs = di.sl<SharedPreferences>();
   
   runApp(MyApp(sharedPreferences: prefs));
 }

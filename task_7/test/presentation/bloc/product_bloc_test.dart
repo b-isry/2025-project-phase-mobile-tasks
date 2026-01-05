@@ -8,7 +8,6 @@ import 'package:product_manager/domain/usecases/get_product_usecase.dart';
 import 'package:product_manager/domain/usecases/create_product_usecase.dart';
 import 'package:product_manager/domain/usecases/update_product_usecase.dart';
 import 'package:product_manager/domain/usecases/delete_product_usecase.dart';
-import 'package:product_manager/domain/usecases/base_usecase.dart';
 import 'package:product_manager/presentation/bloc/product_bloc.dart';
 import 'package:product_manager/presentation/bloc/product_event.dart';
 import 'package:product_manager/presentation/bloc/product_state.dart';
