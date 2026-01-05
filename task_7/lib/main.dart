@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/injection/injection_container.dart' as di;
-import 'providers/product_provider.dart';
-import 'routes.dart';
+import 'presentation/bloc/product_bloc.dart';
+import 'presentation/bloc/product_event.dart';
+import 'presentation/pages/product_list_page.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -12,28 +12,22 @@ Future<void> main() async {
   // Initialize dependency injection
   await di.init();
   
-  // Get SharedPreferences from service locator
-  final prefs = di.sl<SharedPreferences>();
-  
-  runApp(MyApp(sharedPreferences: prefs));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final SharedPreferences sharedPreferences;
-
-  const MyApp({super.key, required this.sharedPreferences});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ProductProvider(sharedPreferences: sharedPreferences),
+    return BlocProvider(
+      // Provide ProductBloc at app root level for ProductListPage
+      create: (_) => di.sl<ProductBloc>()..add(const LoadAllProductsEvent()),
       child: MaterialApp(
         title: 'Product Manager',
         theme: AppTheme.theme,
-        // ROUTING: Define initial route and named routes
-        initialRoute: Routes.home,
-        routes: Routes.routes,
-        onGenerateRoute: Routes.onGenerateRoute,
+        debugShowCheckedModeBanner: false,
+        home: const ProductListPage(),
       ),
     );
   }
